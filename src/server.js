@@ -3,24 +3,29 @@ var app = express();
 require('dotenv').config();
 var client = require('./config/postgresDB.config');
 
+/* importing different routes */
+var userRoute = require('./routes/userRoute');
 
-app.get('/', (req, res) => {
-    // console.log('Hi');
-    // res.send('Server is running');
-    client.connect();
-    client.query('select * from _tblSuperSurveyUsers', (err, res) => {
-        if (err) {
-          console.log(err.stack)
-        } else {
-          console.log(res.rows[0])
-        }
-      })
+app.use('/api/user', userRoute.router);
+
+
+
+app.get('/', (request, response) => {
+  // client.connect();
+  client.query('select * from _tblSuperSurveyUsers', (err, result) => {
+    if (err) {
+      console.log(err.stack)
+    } else {
+      response.send(result.rows)
+      // client.end();
+    }
+  }) 
 });
 
 /* Setting the PORT NUMBER */
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, (err) => {
-    if (err) throw err;
-    console.log(`Server is running on port http://localhost:${PORT}`);
+  if (err) throw err;
+  console.log(`Server is running on port http://localhost:${PORT}`);
 })

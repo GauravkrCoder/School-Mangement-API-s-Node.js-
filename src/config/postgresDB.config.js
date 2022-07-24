@@ -9,7 +9,7 @@ const client = new Client({
     password: 'root',
     database: 'Super Survey DB'
 })
-
+client.connect()
 client.on("connect", () => {
     console.log("Database connected")
 })
