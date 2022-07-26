@@ -14,6 +14,7 @@ var userController = require('../controllers/user.controller');
 
 /* Defining the Routes for different API's */
 router.post('/register', userController.signUp);
+router.post('/login', userController.login);
 
 
 module.exports = {
