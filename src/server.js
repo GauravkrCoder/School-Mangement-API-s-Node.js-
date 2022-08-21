@@ -2,6 +2,7 @@ var express = require("express");
 var app = express();
 require("dotenv").config();
 var client = require("./config/postgresDB.config");
+var mysqlClient = require("./config/mySqlDB.config");
 
 app.all("*", function (req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
@@ -18,19 +19,31 @@ var userRoute = require("./routes/userRoute");
 
 app.use("/api/user", userRoute.router);
 
-app.get("/", (request, response) => {
-  // client.connect();
-  client.query("select * from _tblSuperSurveyUsers", (err, result) => {
+// app.get("/", (request, response) => {  
+//   client.query("select * from _tblSuperSurveyUsers", (err, result) => {
+//     if (err) {
+//       console.log(err.stack);
+//     } else {      
+//       response.status(200).json({
+//         code: 200,
+//         message: "Get User List Successfully.",
+//         data: result.rows,
+//       });     
+//     }
+//   });
+// });
+
+app.get("/", (request, response) => {  
+  mysqlClient.query("select * from tbluser", (err, result) => {
     if (err) {
       console.log(err.stack);
-    } else {
-      // response.send(result.rows);
+    } else { 
+      console.log(result);     
       response.status(200).json({
         code: 200,
         message: "Get User List Successfully.",
-        data: result.rows,
-      });
-      // client.end();
+        data: result,
+      });     
     }
   });
 });
