@@ -52,6 +52,11 @@ app.get("/", (request, response) => {
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, (err) => {
-  if (err) throw err;
-  console.log(`Server is running on port http://localhost:${PORT}`);
+  // if (err) throw err;
+  if (err) {
+    console.log(err);
+  }else{
+    console.log(`Server is running on port http://localhost:${PORT}`);
+
+  }
 });

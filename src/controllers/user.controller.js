@@ -39,7 +39,8 @@ signUp = (request, response, next) => {
   const { error } = registerSchema.validate(request.body);
   if (error) {
     // response.send(error.details[0].message);
-    response.json({
+    response.status(400).json({
+      code:400,
       message: error.details[0].message,
     });
     response.end(data);
@@ -60,7 +61,8 @@ signUp = (request, response, next) => {
       if (err) {
         if (err.detail) {
           console.log(err);
-          response.json({
+          response.status(409).json({
+            code: 409,
             error: "Email already exists",
           });
         }
