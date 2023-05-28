@@ -1,15 +1,15 @@
-var mysql = require("mysql");
+// var mysql = require("mysql");
 
-var con = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "",
-  database: "merndb"
-});
+// var con = mysql.createConnection({
+//   host: "localhost",
+//   user: "root",
+//   password: "",
+//   database: "merndb"
+// });
 
-con.connect(function (err) {
-  if (err) throw err;
-  console.log("My Sql DB Connected!");
-});
+// con.connect(function (err) {
+//   if (err) throw err;
+//   console.log("My Sql DB Connected!");
+// });
 
-module.exports = con;
+// module.exports = con;

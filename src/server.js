@@ -2,7 +2,7 @@ var express = require("express");
 var app = express();
 require("dotenv").config();
 var client = require("./config/postgresDB.config");
-var mysqlClient = require("./config/mySqlDB.config");
+// var mysqlClient = require("./config/mySqlDB.config");
 
 app.all("*", function (req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
@@ -19,38 +19,28 @@ var userRoute = require("./routes/userRoute");
 
 app.use("/api/user", userRoute.router);
 
+
+
 // app.get("/", (request, response) => {  
-//   client.query("select * from _tblSuperSurveyUsers", (err, result) => {
+//   mysqlClient.query("select * from tbluser", (err, result) => {
 //     if (err) {
 //       console.log(err.stack);
-//     } else {      
+//     } else { 
+//       console.log(result);     
 //       response.status(200).json({
 //         code: 200,
 //         message: "Get User List Successfully.",
-//         data: result.rows,
+//         data: result,
 //       });     
 //     }
 //   });
 // });
 
-app.get("/", (request, response) => {  
-  mysqlClient.query("select * from tbluser", (err, result) => {
-    if (err) {
-      console.log(err.stack);
-    } else { 
-      console.log(result);     
-      response.status(200).json({
-        code: 200,
-        message: "Get User List Successfully.",
-        data: result,
-      });     
-    }
-  });
-});
-
 /* Setting the PORT NUMBER */
 const PORT = process.env.PORT || 3000;
 
+
+/* To Start server run nodemon src/server.js */
 app.listen(PORT, (err) => {
   // if (err) throw err;
   if (err) {

@@ -3,6 +3,8 @@ var passwordHash = require("password-hash");
 var Joi = require("joi");
 var nodemailer = require("nodemailer");
 var jwt = require("jsonwebtoken");
+const multer = require("multer");
+var fs = require("fs");
 
 /* getting current date & time */
 function getCurrentDateTime() {
@@ -35,12 +37,13 @@ signUp = (request, response, next) => {
   const registerSchema = Joi.object({
     email_id: Joi.string().email().required(),
     password: Joi.string().min(6).max(16).required(),
+    user_role: Joi.string().required(),
   });
   const { error } = registerSchema.validate(request.body);
   if (error) {
     // response.send(error.details[0].message);
     response.status(400).json({
-      code:400,
+      code: 400,
       message: error.details[0].message,
     });
     response.end(data);
@@ -49,13 +52,21 @@ signUp = (request, response, next) => {
     /* If request is validated properly then going to store new user data to DB  */
     email_id = request.body.email_id;
     password = passwordHash.generate(request.body.password);
+    user_role = request.body.user_role;
     created_at = getCurrentDateTime();
     updated_at = getCurrentDateTime();
     last_login = getCurrentDateTime();
 
     const text =
-      "INSERT INTO _tblSuperSurveyUsers(email_id,password,created_at,updated_at,last_login) VALUES($1, $2,$3,$4,$5)";
-    const values = [email_id, password, created_at, updated_at, last_login];
+      "INSERT INTO _tblSuperSurveyUsers(email_id,password,user_role,created_at,updated_at,last_login) VALUES($1, $2,$3,$4,$5,$6)";
+    const values = [
+      email_id,
+      password,
+      user_role,
+      created_at,
+      updated_at,
+      last_login,
+    ];
     // callback
     client.query(text, values, (err, result) => {
       if (err) {
@@ -118,6 +129,7 @@ async function emailSent(email) {
   });
 }
 
+/* Login Api Controller */
 login = (request, response, next) => {
   const _loginData = Joi.object({
     email_id: Joi.string().email().required(),
@@ -180,7 +192,104 @@ login = (request, response, next) => {
   }
 };
 
+getUserList = (request, response, next) => {  
+  client.query("select * from _tblSuperSurveyUsers", (err, result) => {
+    if (err) {
+      console.log(err.stack);
+    } else {
+      response.status(200).json({
+        code: 200,
+        message: "Get User List Successfully.",
+        data: result.rows,
+      });
+    }
+  });  
+};
+
+var upload = multer({
+  storage: multer.diskStorage({
+    destination: function (req, file, cb) {
+      cb(null, "src/assets/uploadedImages");
+    },
+    filename: function (req, file, cb) {
+      cb(null, file.fieldname + "-" + Date.now() + ".jpg");
+    },
+  }),
+}).single("profilePic");
+
+uploadProfilePicture = (request, response, next) => {
+  // Error MiddleWare for multer file upload, so if any
+  // error occurs, the image would not be uploaded!
+  upload(request, response, function (err) {
+    // console.log("Upload Req", request.file);
+    filename = request.file.filename;
+    filepath = request.file.path;
+    mimetype = request.file.mimetype;
+    size = request.file.size;
+    user_id = request.body.user_id;
+
+    if (err) {
+      /*  ERROR occured (here it can be occured due to uploading image of size greater than      1MB or uploading different file type) */
+      response.send(err);
+    } else {
+      const query = `insert into _tblUserImagefiles (filename,filepath,mimetype,size,user_id) values ($1,$2,$3,$4,$5)`;
+      let values = [filename, filepath, mimetype, size, user_id];
+      client.query(query, values, (err, result) => {
+        if (err) {
+          if (err.detail) {
+            console.log(err);
+            if (err.detail) {
+              const updateQuery = `UPDATE _tblUserImagefiles 
+                                 SET filename = $1, filepath = $2, mimetype = $3,size= $4
+                                 WHERE user_id=$5`;
+              client.query(updateQuery, values, (err, result) => {
+                if (err) {
+                  if (err.detail) {
+                    response.status(409).json({
+                      code: 409,
+                      error: err.detail,
+                    });
+                  }
+                } else {
+                  response.status(200).json({
+                    code: 200,
+                    messgae: "Success, Image updated!",
+                  });
+                }
+              });
+            }
+          }
+        } else {
+          response.status(200).json({
+            code: 200,
+            message: "Success, Image uploaded!",
+          });
+        }
+      });
+    }
+  });
+};
+
+getProfilePic = (request, response, next) => {
+  fs.readFile(
+    "src/assets/uploadedImages/profilePic-1661960109314.jpg",
+    function (err, data) {
+      if (err) throw err; // Fail if the file can't be read.
+      // response.writeHead(200, { "Content-Type": "image/jpeg" });
+      // let imageAsBase64 = fs.readFileSync(data, 'base64');
+      // response.end(imageAsBase64);
+      // response.status(200).json({
+      //   code: 200,
+      //   image: "http://localhost:3000/" + data,
+      // });
+    }
+  );
+};
+
 module.exports = {
   signUp,
   login,
+  uploadProfilePicture,
+  getProfilePic,
+  getUserList
 };
