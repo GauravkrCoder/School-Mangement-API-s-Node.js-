@@ -11,30 +11,17 @@ app.all("*", function (req, res, next) {
     "Cache-Control, Pragma, Origin, Authorization, Content-Type, X-Requested-With"
   );
   res.header("Access-Control-Allow-Methods", "*");
+  // req.header("X_correlation_id", "*");
+  // req.header("X_user_id", "*");
   return next();
 });
 
 /* importing different routes */
-var userRoute = require("./routes/userRoute");
+const _userRoute = require("./routes/userRoute");
+const _projectRoute = require("./routes/projectRoute");
 
-app.use("/api/user", userRoute.router);
-
-
-
-// app.get("/", (request, response) => {  
-//   mysqlClient.query("select * from tbluser", (err, result) => {
-//     if (err) {
-//       console.log(err.stack);
-//     } else { 
-//       console.log(result);     
-//       response.status(200).json({
-//         code: 200,
-//         message: "Get User List Successfully.",
-//         data: result,
-//       });     
-//     }
-//   });
-// });
+app.use("/api/user", _userRoute.router);
+app.use("/api/project", _projectRoute.router);
 
 /* Setting the PORT NUMBER */
 const PORT = process.env.PORT || 3000;
@@ -45,8 +32,26 @@ app.listen(PORT, (err) => {
   // if (err) throw err;
   if (err) {
     console.log(err);
-  }else{
+  } else {
     console.log(`Server is running on port http://localhost:${PORT}`);
 
   }
 });
+
+
+
+
+// app.get("/", (request, response) => {
+//   mysqlClient.query("select * from tbluser", (err, result) => {
+//     if (err) {
+//       console.log(err.stack);
+//     } else {
+//       console.log(result);
+//       response.status(200).json({
+//         code: 200,
+//         message: "Get User List Successfully.",
+//         data: result,
+//       });
+//     }
+//   });
+// });

@@ -5,6 +5,9 @@ var nodemailer = require("nodemailer");
 var jwt = require("jsonwebtoken");
 const multer = require("multer");
 var fs = require("fs");
+var sentEmail = require("../shared/utils/sentMails");
+var staticConstants = require("../shared/statics/appConstants");
+var randomString = require("randomstring");
 
 /* getting current date & time */
 function getCurrentDateTime() {
@@ -84,50 +87,17 @@ signUp = (request, response, next) => {
             "Registered Successfully..,Please Check your email inbox to verify.",
         });
         /* After Successfully register Send Verification mail to User (on Registered Email ID to get verified)*/
-        emailSent(email_id);
+        const _mailContents = {
+          toMail: email_id,
+          subject: "Congratulations you have register successfully.",
+          text: "Please verify your email",
+          content: staticConstants.emailVerificationText,
+        };
+        sentEmail._sendEmail(_mailContents);
       }
     });
   }
 };
-
-/* Sending Verification Email */
-async function emailSent(email) {
-  /*Sending Verification email*/
-  var transporter = nodemailer.createTransport({
-    // service: 'gmail',
-    host: "smtp.ethereal.email",
-    port: 587,
-    secure: false, // true for 465, false for other ports
-    auth: {
-      user: "tristin.kuphal99@ethereal.email",
-      pass: "44jJUbWhgd15hnEteY",
-    },
-  });
-
-  var mailOptions = {
-    from: "Super Survey",
-    to: email,
-    subject: "Congratulations you are now a member of our company",
-    text: "Please Verify your email by clicking on the this button",
-    html: `<a href="https://www.google.com" target="_blank" style="font: bold 11px Arial;
-        text-decoration: none;
-        background-color: #FFA500;
-        color: #333333;
-        padding: 2px 6px 2px 6px;
-        border-top: 1px solid #CCCCCC;
-        border-right: 1px solid #333333;
-        border-bottom: 1px solid #333333;
-        border-left: 1px solid #CCCCCC;">Verify</a> `,
-  };
-
-  transporter.sendMail(mailOptions, function (error, info) {
-    if (error) {
-      console.log(error);
-    } else {
-      console.log("Email sent: " + info.response);
-    }
-  });
-}
 
 /* Login Api Controller */
 login = (request, response, next) => {
@@ -192,7 +162,109 @@ login = (request, response, next) => {
   }
 };
 
-getUserList = (request, response, next) => {  
+forgetPassword = (request, response, next) => {
+  try {
+    const _frgtPwdData = Joi.object({
+      email_id: Joi.string().email().required(),
+    });
+    const { error } = _frgtPwdData.validate(request.body);
+    if (error) {
+      return next(error);
+    } else {
+      email_id = request.body.email_id;
+      const query = `SELECT * FROM _tblSuperSurveyUsers WHERE email_id=$1`;
+      const values = [email_id];
+      client.query(query, values, (err, result) => {
+        if (err) {
+          if (err.detail) {
+            console.log(err);
+            response.json({
+              error: "Email does not exists.",
+            });
+          }
+        } else {
+          const _isEmailIdExist = result.rows[0]?.email_id;
+          if (_isEmailIdExist === undefined) {
+            response.json({
+              error: "Email does not exists.",
+            });
+          } else {
+            response.status(200).json({
+              code: 200,
+              message: "Mail Sent,please check.!",
+            });
+            const _randomStringToken = randomString.generate();
+            console.log(`${email_id}`);
+            const values = [_randomStringToken, email_id];
+            let query = `UPDATE _tblsupersurveyusers SET token=$1 WHERE email_id=$2`;
+            client.query(query, values, (err, result) => {
+              if (err) {
+                console.log("Update Error -", err);
+                throw err;
+              } else {
+                const _mailContents = {
+                  toMail: email_id,
+                  subject: "Reset Password.",
+                  text: "To reset password, click on the link below.",
+                  content: `<p> We heard that you lost your password. Sorry about that! </p>
+                  <p>But don’t worry! You can use the following link to reset your password:</p>
+                  <a href="http://localhost:4200/reset-password?token=${_randomStringToken}"> Reset Password </a> 
+                  <p>Thanks </p>
+                  <p>Team Super Survey</p>`,
+                };
+                sentEmail._sendEmail(_mailContents);
+              }
+            });
+          }
+        }
+      });
+    }
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+/* Reset Password API */
+resetPassword = (req, res, next) => {
+  /* Get token first & Validate the token exist from DB */
+  const _token = req.query.token;
+  const _password = passwordHash.generate(req.body.password);
+  const values = [_token];
+  const query = `SELECT email_id FROM _tblSuperSurveyUsers WHERE token=$1`;
+  client.query(query, values, (err, result) => {
+    if (err) {
+      throw err;
+    } else {
+      const _isEmailId = result.rows[0]?.email_id;
+      console.log("Result", result.rows[0]?.email_id);
+      if (_isEmailId === undefined) {
+        res.json({
+          error: "Invalid Token",
+        });
+      } else {
+        console.log("Result", result.rows[0]?.email_id);
+        const values = [_password, _isEmailId];
+        const query = `UPDATE _tblsupersurveyusers SET password=$1 WHERE email_id=$2`;
+        client.query(query, values, (err, result) => {
+          if (err) {
+            throw err;
+          } else {
+            res.status(200).json({
+              code: 200,
+              message: "Password updated successfully, Please login!",
+            });
+          }
+        });
+      }
+    }
+  });
+
+  console.log(_token);
+  console.log(_password);
+};
+
+/* Sample User List GET */
+getUserList = (request, response, next) => {
   client.query("select * from _tblSuperSurveyUsers", (err, result) => {
     if (err) {
       console.log(err.stack);
@@ -203,7 +275,7 @@ getUserList = (request, response, next) => {
         data: result.rows,
       });
     }
-  });  
+  });
 };
 
 var upload = multer({
@@ -289,7 +361,9 @@ getProfilePic = (request, response, next) => {
 module.exports = {
   signUp,
   login,
+  forgetPassword,
+  resetPassword,
   uploadProfilePicture,
   getProfilePic,
-  getUserList
+  getUserList,
 };
