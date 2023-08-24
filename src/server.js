@@ -26,6 +26,9 @@ app.use("/api/project", _projectRoute.router);
 /* Setting the PORT NUMBER */
 const PORT = process.env.PORT || 3000;
 
+app.get('/', (req, res, next) => {
+  res.end('Hello World!');
+})
 
 /* To Start server run nodemon src/server.js */
 app.listen(PORT, (err) => {

@@ -19,6 +19,7 @@ const _projectController = require("../controllers/project.controller");
 /* Defining the Routes for different API's */
 router.get("/getprojectlist", _projectController.getProjectDataList);
 router.post("/addproject", _projectController.addNewProject);
+router.post("/updateproject", _projectController.updateProjectDetails);
 router.post("/deleteproject", _projectController.deleteProjectById);
 
 module.exports = {

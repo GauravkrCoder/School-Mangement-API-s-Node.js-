@@ -118,14 +118,14 @@ login = (request, response, next) => {
         if (err.detail) {
           console.log(err);
           response.json({
-            error: "Email does not exists.",
+            error: "email_does_not_exists",
           });
         }
       } else {
         const decrpytPassword = result.rows[0]?.password;
         if (decrpytPassword === undefined) {
           response.json({
-            error: "Email does not exists.",
+            error: "email_does_not_exists",
           });
         } else {
           if (passwordHash.verify(request.body.password, decrpytPassword)) {
@@ -147,13 +147,13 @@ login = (request, response, next) => {
             };
             response.status(200).json({
               code: 200,
-              message: "Login success.!",
+              message: "login_success",
               data: _userData,
             });
           } else {
             response.status(401).json({
               code: 401,
-              message: "Email or password is incorrect.",
+              message: "email_or_password_wrong",
             });
           }
         }
